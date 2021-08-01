@@ -1,0 +1,3 @@
+{
+  "commands.dieyourway.get.fail": "Could not find index %2$s in file %1$s"
+}

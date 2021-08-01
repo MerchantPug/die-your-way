@@ -1,38 +1,42 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "dieyourway",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Die Your Way",
+  "description": "E.",
   "authors": [
-    "Me!"
+    "Pug"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "",
+    "sources": "https://github.com/MerchantPug/die-your-way"
   },
 
-  "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "license": "MIT",
+  "icon": "assets/dieyourway/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "io.github.merchantpug.dieyourway.DieYourWay"
+    ],
+    "client": [
+      "io.github.merchantpug.dieyourway.DieYourWayClient"
+    ],
+    "server": [
+      "io.github.merchantpug.dieyourway.DieYourWayServer"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "dieyourway.mixins.json"
   ],
 
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",
     "minecraft": "1.17.x",
-    "java": ">=16"
-  },
-  "suggests": {
-    "another-mod": "*"
+    "java": ">=16",
+    "calio": ">=1.0.2"
   }
 }

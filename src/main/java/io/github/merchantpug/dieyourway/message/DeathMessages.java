@@ -101,6 +101,7 @@ public class DeathMessages {
 
     public void write(PacketByteBuf buffer) {
         SerializableData.Instance data = DATA.new Instance();
+        data.set("loading_order", loadingOrder);
         data.set("damage_condition", damageCondition);
         data.set("condition", condition);
         data.set("messages", messages);

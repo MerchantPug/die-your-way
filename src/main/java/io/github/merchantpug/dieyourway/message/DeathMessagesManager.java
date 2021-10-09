@@ -36,7 +36,7 @@ public class DeathMessagesManager extends MultiJsonDataLoader implements Identif
                 }
             });
         });
-        DieYourWay.LOGGER.info("Finished loading death messages from data files. Registry contains " + DeathMessagesRegistry.size() + " data files.");
+        DieYourWay.LOGGER.info("Finished loading death messages from data files. Registry contains " + DeathMessagesRegistry.size() + " message files.");
     }
 
     @Override

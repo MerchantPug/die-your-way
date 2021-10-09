@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package io.github.merchantpug.dieyourway.message.condition;
+package io.github.merchantpug.dieyourway.condition;
 
 import com.google.gson.JsonObject;
 import io.github.apace100.calio.data.SerializableData;

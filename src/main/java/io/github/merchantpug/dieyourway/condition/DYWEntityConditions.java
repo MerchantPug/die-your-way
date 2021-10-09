@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package io.github.merchantpug.dieyourway.message.condition;
+package io.github.merchantpug.dieyourway.condition;
 
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataType;
@@ -31,16 +31,14 @@ import io.github.merchantpug.dieyourway.DieYourWay;
 import io.github.merchantpug.dieyourway.access.MovingEntity;
 import io.github.merchantpug.dieyourway.access.SubmergableEntity;
 import io.github.merchantpug.dieyourway.data.DYWDataTypes;
+import io.github.merchantpug.dieyourway.mixin.apoli.EntityAccessor;
 import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import io.github.merchantpug.dieyourway.util.Comparison;
 import io.github.merchantpug.dieyourway.util.Shape;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.EntityGroup;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.*;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.effect.StatusEffect;
@@ -54,6 +52,8 @@ import net.minecraft.loot.condition.LootCondition;
 import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.server.MinecraftServer;
@@ -63,6 +63,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.registry.Registry;
@@ -81,12 +82,12 @@ public class DYWEntityConditions {
                 (data, entity) -> data.getBoolean("value")));
         register(new DYWConditionFactory<>(DieYourWay.identifier("and"), new SerializableData()
                 .add("conditions", DYWDataTypes.ENTITY_CONDITIONS),
-                (data, entity) -> ((List<DYWConditionFactory<LivingEntity>.Instance>)data.get("conditions")).stream().allMatch(
+                (data, entity) -> ((List<DYWConditionFactory<Entity>.Instance>)data.get("conditions")).stream().allMatch(
                         condition -> condition.test(entity)
                 )));
         register(new DYWConditionFactory<>(DieYourWay.identifier("or"), new SerializableData()
                 .add("conditions", DYWDataTypes.ENTITY_CONDITIONS),
-                (data, entity) -> ((List<DYWConditionFactory<LivingEntity>.Instance>)data.get("conditions")).stream().anyMatch(
+                (data, entity) -> ((List<DYWConditionFactory<Entity>.Instance>)data.get("conditions")).stream().anyMatch(
                         condition -> condition.test(entity)
                 )));
         register(new DYWConditionFactory<>(DieYourWay.identifier("block_collision"), new SerializableData()
@@ -108,18 +109,18 @@ public class DYWEntityConditions {
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.INT), (data, entity) ->
                 ((Comparison)data.get("comparison")).compare(entity.world.getTimeOfDay() % 24000L, data.getInt("compare_to"))));
-        register(new DYWConditionFactory<>(DieYourWay.identifier("fall_flying"), new SerializableData(), (data, entity) -> entity.isFallFlying()));
-        // TODO Add this back once Mixin 0.8.3 has a Fabric version
-        /* register(new DYWConditionFactory<>(DieYourWay.identifier("exposed_to_sun"), new SerializableData(), (data, entity) -> {
-            if (entity.world.isDay() && !((EntityAccessor) entity).callIsBeingRainedOn()) {
+        register(new DYWConditionFactory<>(DieYourWay.identifier("fall_flying"), new SerializableData(), (data, entity) -> entity instanceof LivingEntity && ((LivingEntity) entity).isFallFlying()));
+        // TODO Make mixin config
+
+        register(new DYWConditionFactory<>(DieYourWay.identifier("exposed_to_sun"), new SerializableData(), (data, entity) -> {
+            if (entity.world.isDay() && !((EntityAccessor)entity).callIsBeingRainedOn()) {
                 float f = entity.getBrightnessAtEyes();
                 BlockPos blockPos = entity.getVehicle() instanceof BoatEntity ? (new BlockPos(entity.getX(), (double) Math.round(entity.getY()), entity.getZ())).up() : new BlockPos(entity.getX(), (double) Math.round(entity.getY()), entity.getZ());
                 return f > 0.5F && entity.world.isSkyVisible(blockPos);
             }
             return false;
-        }));*/
-        // TODO Add this back once Mixin 0.8.3 has a Fabric version
-        //register(new DYWConditionFactory<>(DieYourWay.identifier("in_rain"), new SerializableData(), (data, entity) -> ((EntityAccessor) entity).callIsBeingRainedOn()));
+        }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("in_rain"), new SerializableData(), (data, entity) -> ((EntityAccessor) entity).callIsBeingRainedOn()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("invisible"), new SerializableData(), (data, entity) -> entity.isInvisible()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("on_fire"), new SerializableData(), (data, entity) -> entity.isOnFire()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("exposed_to_sky"), new SerializableData(), (data, entity) -> {
@@ -136,18 +137,17 @@ public class DYWEntityConditions {
                 .add("max_duration", SerializableDataTypes.INT, Integer.MAX_VALUE),
                 (data, entity) -> {
                     StatusEffect effect = (StatusEffect)data.get("effect");
-                    if(effect == null) {
-                        return false;
-                    }
-                    if(entity.hasStatusEffect(effect)) {
-                        StatusEffectInstance instance = entity.getStatusEffect(effect);
-                        return instance.getDuration() <= data.getInt("max_duration") && instance.getDuration() >= data.getInt("min_duration")
-                                && instance.getAmplifier() <= data.getInt("max_amplifier") && instance.getAmplifier() >= data.getInt("min_amplifier");
+                    if(entity instanceof LivingEntity living) {
+                        if (living.hasStatusEffect(effect)) {
+                            StatusEffectInstance instance = living.getStatusEffect(effect);
+                            return instance.getDuration() <= data.getInt("max_duration") && instance.getDuration() >= data.getInt("min_duration")
+                                    && instance.getAmplifier() <= data.getInt("max_amplifier") && instance.getAmplifier() >= data.getInt("min_amplifier");
+                        }
                     }
                     return false;
                 }));
         register(new DYWConditionFactory<>(DieYourWay.identifier("submerged_in"), new SerializableData().add("fluid", SerializableDataTypes.FLUID_TAG),
-                (data, entity) -> ((SubmergableEntity)entity).dywIsSubmergedInLoosely((Tag<Fluid>)data.get("fluid"))));
+                (data, entity) -> ((io.github.apace100.apoli.access.SubmergableEntity)entity).isSubmergedInLoosely((Tag<Fluid>)data.get("fluid"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("fluid_height"), new SerializableData()
                 .add("fluid", SerializableDataTypes.FLUID_TAG)
                 .add("comparison", DYWDataTypes.COMPARISON)
@@ -179,21 +179,24 @@ public class DYWEntityConditions {
         register(new DYWConditionFactory<>(DieYourWay.identifier("equipped_item"), new SerializableData()
                 .add("equipment_slot", SerializableDataTypes.EQUIPMENT_SLOT)
                 .add("item_condition", DYWDataTypes.ITEM_CONDITION),
-                (data, entity) -> ((DYWConditionFactory<ItemStack>.Instance)data.get("item_condition")).test(
-                        entity.getEquippedStack((EquipmentSlot)data.get("equipment_slot")))));
+                (data, entity) -> entity instanceof LivingEntity && ((DYWConditionFactory<ItemStack>.Instance) data.get("item_condition")).test(
+                        ((LivingEntity) entity).getEquippedStack((EquipmentSlot) data.get("equipment_slot")))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("attribute"), new SerializableData()
                 .add("attribute", SerializableDataTypes.ATTRIBUTE)
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.DOUBLE),
                 (data, entity) -> {
                     double attrValue = 0F;
-                    EntityAttributeInstance attributeInstance = entity.getAttributeInstance((EntityAttribute) data.get("attribute"));
-                    if(attributeInstance != null) {
-                        attrValue = attributeInstance.getValue();
+                    if(entity instanceof LivingEntity living) {
+                        EntityAttributeInstance attributeInstance = living.getAttributeInstance((EntityAttribute) data.get("attribute"));
+                        if(attributeInstance != null) {
+                            attrValue = attributeInstance.getValue();
+                        }
                     }
                     return ((Comparison)data.get("comparison")).compare(attrValue, data.getDouble("compare_to"));
                 }));
         register(new DYWConditionFactory<>(DieYourWay.identifier("swimming"), new SerializableData(), (data, entity) -> entity.isSwimming()));
+
         register(new DYWConditionFactory<>(DieYourWay.identifier("air"), new SerializableData()
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.INT),
@@ -256,11 +259,17 @@ public class DYWEntityConditions {
         register(new DYWConditionFactory<>(DieYourWay.identifier("health"), new SerializableData()
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.FLOAT),
-                (data, entity) -> ((Comparison)data.get("comparison")).compare(entity.getHealth(), data.getFloat("compare_to"))));
+                (data, entity) -> ((Comparison)data.get("comparison")).compare(entity instanceof LivingEntity ? ((LivingEntity)entity).getHealth() : 0f, data.getFloat("compare_to"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("relative_health"), new SerializableData()
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.FLOAT),
-                (data, entity) -> ((Comparison)data.get("comparison")).compare(entity.getHealth() / entity.getMaxHealth(), data.getFloat("compare_to"))));
+                (data, entity) -> {
+                    float health = 0f;
+                    if(entity instanceof LivingEntity living) {
+                        health = living.getHealth() / living.getMaxHealth();
+                    }
+                    return ((Comparison)data.get("comparison")).compare(health, data.getFloat("compare_to"));
+                }));
         register(new DYWConditionFactory<>(DieYourWay.identifier("biome"), new SerializableData()
                 .add("biome", SerializableDataTypes.IDENTIFIER, null)
                 .add("biomes", SerializableDataTypes.IDENTIFIERS, null)
@@ -314,7 +323,7 @@ public class DYWEntityConditions {
                                 entity.getPos(),
                                 entity.getRotationClient(),
                                 entity.world instanceof ServerWorld ? (ServerWorld)entity.world : null,
-                                data.getInt("permission_level"),
+                                2,
                                 entity.getName().getString(),
                                 entity.getDisplayName(),
                                 server,
@@ -381,11 +390,11 @@ public class DYWEntityConditions {
                     return comparison.compare(count, compareTo);}));
         register(new DYWConditionFactory<>(DieYourWay.identifier("entity_group"), new SerializableData()
                 .add("group", SerializableDataTypes.ENTITY_GROUP),
-                (data, entity) -> entity.getGroup() == (EntityGroup)data.get("group")));
+                (data, entity) -> entity instanceof LivingEntity && ((LivingEntity) entity).getGroup() == data.get("group")));
         register(new DYWConditionFactory<>(DieYourWay.identifier("in_tag"), new SerializableData()
                 .add("tag", SerializableDataTypes.ENTITY_TAG),
                 (data, entity) -> ((Tag<EntityType<?>>)data.get("tag")).contains(entity.getType())));
-        register(new DYWConditionFactory<>(DieYourWay.identifier("climbing"), new SerializableData(), (data, entity) -> entity.isClimbing()));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("climbing"), new SerializableData(), (data, entity) -> entity instanceof LivingEntity && ((LivingEntity)entity).isClimbing()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("tamed"), new SerializableData(), (data, entity) -> {
             if(entity instanceof TameableEntity) {
                 return ((TameableEntity)entity).isTamed();
@@ -394,14 +403,16 @@ public class DYWEntityConditions {
         }));
         register(new DYWConditionFactory<>(DieYourWay.identifier("using_item"), new SerializableData()
                 .add("item_condition", DYWDataTypes.ITEM_CONDITION, null), (data, entity) -> {
-            if(entity.isUsingItem()) {
-                DYWConditionFactory<ItemStack>.Instance condition = (DYWConditionFactory<ItemStack>.Instance)data.get("item_condition");
-                if(condition != null) {
-                    Hand activeHand = entity.getActiveHand();
-                    ItemStack handStack = entity.getStackInHand(activeHand);
-                    return condition.test(handStack);
-                } else {
-                    return true;
+            if(entity instanceof LivingEntity living) {
+                if (living.isUsingItem()) {
+                    DYWConditionFactory<ItemStack>.Instance condition = (DYWConditionFactory<ItemStack>.Instance) data.get("item_condition");
+                    if (condition != null) {
+                        Hand activeHand = living.getActiveHand();
+                        ItemStack handStack = living.getStackInHand(activeHand);
+                        return condition.test(handStack);
+                    } else {
+                        return true;
+                    }
                 }
             }
             return false;
@@ -415,24 +426,113 @@ public class DYWEntityConditions {
                 .add("calculation", SerializableDataTypes.STRING, "sum"),
                 (data, entity) -> {
                     int value = 0;
-                    Enchantment enchantment = (Enchantment)data.get("enchantment");
-                    String calculation = data.getString("calculation");
-                    switch(calculation) {
-                        case "sum":
-                            for(ItemStack stack : enchantment.getEquipment(entity).values()) {
-                                value += EnchantmentHelper.getLevel(enchantment, stack);
-                            }
-                            break;
-                        case "max":
-                            value = EnchantmentHelper.getEquipmentLevel(enchantment, entity);
-                            break;
-                        default:
-                            DieYourWay.LOGGER.error("Error in \"enchantment\" entity condition, undefined calculation type: \"" + calculation + "\".");
-                            break;
+                    if(entity instanceof LivingEntity le) {
+                        Enchantment enchantment = (Enchantment)data.get("enchantment");
+                        String calculation = data.getString("calculation");
+                        switch(calculation) {
+                            case "sum":
+                                for(ItemStack stack : enchantment.getEquipment(le).values()) {
+                                    value += EnchantmentHelper.getLevel(enchantment, stack);
+                                }
+                                break;
+                            case "max":
+                                value = EnchantmentHelper.getEquipmentLevel(enchantment, le);
+                                break;
+                            default:
+                                DieYourWay.LOGGER.error("Error in \"enchantment\" entity condition, undefined calculation type: \"" + calculation + "\".");
+                                break;
+                        }
                     }
                     return ((Comparison)data.get("comparison")).compare(value, data.getInt("compare_to"));
                 }));
-
+        register(new DYWConditionFactory<>(DieYourWay.identifier("riding"), new SerializableData()
+                .add("bientity_condition", DYWDataTypes.BIENTITY_CONDITION, null),
+                (data, entity) -> {
+                    if(entity.hasVehicle()) {
+                        if(data.isPresent("bientity_condition")) {
+                            Predicate<Pair<Entity, Entity>> condition = (Predicate<Pair<Entity, Entity>>) data.get("bientity_condition");
+                            Entity vehicle = entity.getVehicle();
+                            return condition.test(new Pair<>(entity, vehicle));
+                        }
+                        return true;
+                    }
+                    return false;
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("riding_root"), new SerializableData()
+                .add("bientity_condition", DYWDataTypes.BIENTITY_CONDITION, null),
+                (data, entity) -> {
+                    if(entity.hasVehicle()) {
+                        if(data.isPresent("bientity_condition")) {
+                            Predicate<Pair<Entity, Entity>> condition = (Predicate<Pair<Entity, Entity>>) data.get("bientity_condition");
+                            Entity vehicle = entity.getRootVehicle();
+                            return condition.test(new Pair<>(entity, vehicle));
+                        }
+                        return true;
+                    }
+                    return false;
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("riding_recursive"), new SerializableData()
+                .add("bientity_condition", DYWDataTypes.BIENTITY_CONDITION, null)
+                .add("comparison", DYWDataTypes.COMPARISON, Comparison.GREATER_THAN_OR_EQUAL)
+                .add("compare_to", SerializableDataTypes.INT, 1),
+                (data, entity) -> {
+                    int count = 0;
+                    if(entity.hasVehicle()) {
+                        Predicate<Pair<Entity, Entity>> cond = (Predicate<Pair<Entity, Entity>>) data.get("bientity_condition");
+                        Entity vehicle = entity.getVehicle();
+                        while(vehicle != null) {
+                            if(cond == null || cond.test(new Pair<>(entity, vehicle))) {
+                                count++;
+                            }
+                            vehicle = vehicle.getVehicle();
+                        }
+                    }
+                    return ((Comparison)data.get("comparison")).compare(count, data.getInt("compare_to"));
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("living"), new SerializableData(), (data, entity) -> entity instanceof LivingEntity));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("passenger"), new SerializableData()
+                .add("bientity_condition", DYWDataTypes.BIENTITY_CONDITION, null)
+                .add("comparison", DYWDataTypes.COMPARISON, Comparison.GREATER_THAN_OR_EQUAL)
+                .add("compare_to", SerializableDataTypes.INT, 1),
+                (data, entity) -> {
+                    int count = 0;
+                    if(entity.hasPassengers()) {
+                        if(data.isPresent("bientity_condition")) {
+                            Predicate<Pair<Entity, Entity>> condition = (Predicate<Pair<Entity, Entity>>) data.get("bientity_condition");
+                            count = (int)entity.getPassengerList().stream().filter(e -> condition.test(new Pair<>(e, entity))).count();
+                        } else {
+                            count = entity.getPassengerList().size();
+                        }
+                    }
+                    return ((Comparison)data.get("comparison")).compare(count, data.getInt("compare_to"));
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("passenger_recursive"), new SerializableData()
+                .add("bientity_condition", DYWDataTypes.BIENTITY_CONDITION, null)
+                .add("comparison", DYWDataTypes.COMPARISON, Comparison.GREATER_THAN_OR_EQUAL)
+                .add("compare_to", SerializableDataTypes.INT, 1),
+                (data, entity) -> {
+                    int count = 0;
+                    if(entity.hasPassengers()) {
+                        if(data.isPresent("bientity_condition")) {
+                            Predicate<Pair<Entity, Entity>> condition = (Predicate<Pair<Entity, Entity>>) data.get("bientity_condition");
+                            List<Entity> passengers = entity.getPassengerList();
+                            count = (int)passengers.stream().flatMap(Entity::streamSelfAndPassengers).filter(e -> condition.test(new Pair<>(e, entity))).count();
+                        } else {
+                            count = (int)entity.getPassengerList().stream().flatMap(Entity::streamSelfAndPassengers).count();
+                        }
+                    }
+                    return ((Comparison)data.get("comparison")).compare(count, data.getInt("compare_to"));
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("nbt"), new SerializableData()
+                .add("nbt", SerializableDataTypes.NBT),
+                (data, entity) -> {
+                    NbtCompound nbt = new NbtCompound();
+                    entity.writeNbt(nbt);
+                    return NbtHelper.matches((NbtCompound)data.get("nbt"), nbt, true);
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("exists"), new SerializableData(), (data, entity) -> entity != null));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("creative_flying"), new SerializableData(),
+                (data, entity) -> entity instanceof PlayerEntity && ((PlayerEntity)entity).getAbilities().flying));
         register(new DYWConditionFactory<>(DieYourWay.identifier("has_name"), new SerializableData(),
         (data, entity) -> entity.hasCustomName()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("custom_name"), new SerializableData()
@@ -440,7 +540,7 @@ public class DYWEntityConditions {
                 (data, entity) -> entity.getCustomName().asString().equals(data.getString("name"))));
     }
 
-    private static void register(DYWConditionFactory<LivingEntity> conditionFactory) {
-        Registry.register(DYWRegistries.ENTITY_CONDITION, conditionFactory.getSerializerId(), conditionFactory);
+    private static void register(DYWConditionFactory<Entity> DYWConditionFactory) {
+        Registry.register(DYWRegistries.ENTITY_CONDITION, DYWConditionFactory.getSerializerId(), DYWConditionFactory);
     }
 }

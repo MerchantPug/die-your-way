@@ -5,6 +5,8 @@ import io.github.apace100.apoli.registry.ApoliRegistries;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
+import io.github.merchantpug.dieyourway.condition.DYWConditionFactory;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.registry.Registry;
 
@@ -15,15 +17,10 @@ public class DYWApoliEntityConditions {
                 (data, entity) -> entity.hasCustomName()));
         register(new ConditionFactory<>(DieYourWay.identifier("custom_name"), new SerializableData()
                 .add("name", SerializableDataTypes.STRING),
-                (data, entity) ->  {
-                    if (entity.hasCustomName()) {
-                        return entity.getCustomName().asString().equals(data.getString("name"));
-                    }
-                    return false;
-                }));
+                (data, entity) -> entity.hasCustomName() && entity.getCustomName().asString().equals(data.getString("name"))));
     }
 
-    private static void register(ConditionFactory<LivingEntity> conditionFactory) {
+    private static void register(ConditionFactory<Entity> conditionFactory) {
         Registry.register(ApoliRegistries.ENTITY_CONDITION, conditionFactory.getSerializerId(), conditionFactory);
     }
 }

@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.mixin;
+package io.github.merchantpug.dieyourway.mixin.message;
 
 import com.mojang.authlib.GameProfile;
 import io.github.merchantpug.dieyourway.DieYourWay;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(ServerPlayerEntity.class)
 public abstract class ServerPlayerEntityMixin extends PlayerEntity {
 	@Unique
-	Pair<DamageSource, Float> dyw_damageSource;
+	Pair<DamageSource, Float> damageSource;
 
 	public ServerPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile profile) {
 		super(world, pos, yaw, profile);
@@ -29,15 +29,13 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity {
 
 	@Inject(method = "damage", at = @At("HEAD"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
 	private void getVariables(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
-		dyw_damageSource = new Pair<>(source, amount);
+		damageSource = new Pair<>(source, amount);
 	}
 
 	@ModifyVariable(method = "onDeath", at = @At(value = "STORE", ordinal = 0))
 	private Text replaceText(Text text) {
-		Text text1 = DeathMessageGenerator.generateDeathMessage(dyw_damageSource, this.getDamageTracker());
-		if (text1 != null) {
-			return text1;
-		}
+		Text text1 = DeathMessageGenerator.generateDeathMessage(damageSource, this.getDamageTracker());
+		if (text1 != null) return text1;
 		return text;
 	}
 }

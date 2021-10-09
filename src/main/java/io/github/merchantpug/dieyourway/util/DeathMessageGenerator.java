@@ -5,6 +5,7 @@ import io.github.merchantpug.dieyourway.DieYourWay;
 import io.github.merchantpug.dieyourway.message.DeathMessages;
 import io.github.merchantpug.dieyourway.message.DeathMessagesRegistry;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageTracker;
@@ -18,60 +19,32 @@ import net.minecraft.util.Pair;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 public class DeathMessageGenerator {
     public static Text generateDeathMessage(Pair<DamageSource, Float> source, DamageTracker tracker) {
         Iterable<Map.Entry<Identifier, DeathMessages>> entries = DeathMessagesRegistry.entries();
         ArrayList<DeathMessages> fileArrayList = new ArrayList<>();
-        if (FabricLoader.getInstance().isModLoaded("apoli")) {
-            entries.forEach(deathMessagesEntry -> {
-                try {
-                    boolean damageCondition = true;
-                    if (deathMessagesEntry.getValue().getApoliDamageCondition() != null) {
-                        if (!deathMessagesEntry.getValue().getApoliDamageCondition().test(source)) {
-                            damageCondition = false;
-                        }
-                    }
-                    boolean entityCondition = true;
-                    if (deathMessagesEntry.getValue().getApoliCondition() != null) {
-                        if (!deathMessagesEntry.getValue().getApoliCondition().test(tracker.getEntity())) {
-                            entityCondition = false;
-                        }
-                    }
-                    if (damageCondition && entityCondition) {
-                        fileArrayList.add(deathMessagesEntry.getValue());
-                    }
-                } catch (Exception e) {
-                    DieYourWay.LOGGER.error(e.getMessage());
-                }
-            });
-        } else {
-            entries.forEach(deathMessagesEntry -> {
-                try {
-                    boolean damageCondition = true;
-                    if (deathMessagesEntry.getValue().getDamageCondition() != null) {
-                        if (!deathMessagesEntry.getValue().getDamageCondition().test(source)) {
-                            damageCondition = false;
-                        }
-                    }
-                    boolean entityCondition = true;
-                    if (deathMessagesEntry.getValue().getCondition() != null) {
-                        if (!deathMessagesEntry.getValue().getCondition().test(tracker.getEntity())) {
-                            entityCondition = false;
-                        }
-                    }
-                    if (damageCondition && entityCondition) {
-                        fileArrayList.add(deathMessagesEntry.getValue());
-                    }
-                } catch (Exception e) {
-                    DieYourWay.LOGGER.error(e.getMessage());
-                }
-            });
-        }
+        entries.forEach(deathMessagesEntry -> {
+            boolean damageCondition;
+            boolean biEntityCondition;
+            boolean entityCondition;
+            if (FabricLoader.getInstance().isModLoaded("apoli")) {
+                damageCondition = deathMessagesEntry.getValue().getApoliDamageCondition() == null || deathMessagesEntry.getValue().getApoliDamageCondition().test(source);
+                biEntityCondition = deathMessagesEntry.getValue().getApoliBiEntityCondition() == null || source.getLeft().getAttacker() != null && deathMessagesEntry.getValue().getApoliBiEntityCondition().test(new Pair<>(tracker.getEntity(), source.getLeft().getAttacker()));
+                entityCondition = deathMessagesEntry.getValue().getApoliCondition() == null || !deathMessagesEntry.getValue().getApoliCondition().test(tracker.getEntity());
+            } else {
+                damageCondition = deathMessagesEntry.getValue().getDamageCondition() == null || deathMessagesEntry.getValue().getDamageCondition().test(source);
+                biEntityCondition = deathMessagesEntry.getValue().getBiEntityCondition() == null || source.getLeft().getAttacker() != null && deathMessagesEntry.getValue().getBiEntityCondition().test(new Pair<>(tracker.getEntity(), source.getLeft().getAttacker()));
+                entityCondition = deathMessagesEntry.getValue().getCondition() == null || !deathMessagesEntry.getValue().getCondition().test(tracker.getEntity());
+            }
+            if (damageCondition && biEntityCondition && entityCondition) {
+                fileArrayList.add(deathMessagesEntry.getValue());
+            }
+        });
         fileArrayList.sort(Comparator.comparingInt(DeathMessages::loadingOrderValue));
         ArrayList<String> deathMessagesList = new ArrayList<>();
         for (DeathMessages deathMessages : fileArrayList) {
@@ -87,23 +60,25 @@ public class DeathMessageGenerator {
         String string;
         try {
             if (!fileArrayList.isEmpty()) {
-                int i = ThreadLocalRandom.current().nextInt(0, deathMessagesList.size());
+                int i = new Random().nextInt(deathMessagesList.size());
                 string = deathMessagesList.get(i);
-                AtomicInteger fileBelongIndex = new AtomicInteger(0);
-                AtomicReference<DeathMessages> fileBelongsTo = new AtomicReference<>();
-                fileArrayList.forEach(files -> {
-                    if (fileBelongsTo.get() == null) {
-                        if (fileBelongIndex.get() == i) {
-                            fileBelongsTo.set(files);
-                        } else {
-                            while (fileBelongIndex.get() < files.getMessages().size()) {
-                                fileBelongIndex.getAndIncrement();
-                            }
+                int fileBelongIndex = 0;
+                DeathMessages fileBelongsTo = null;
+                for (DeathMessages deathMessages : fileArrayList) {
+                    while (fileBelongsTo == null) {
+                        if (fileBelongIndex == i) {
+                            fileBelongsTo = deathMessages;
+                        } else if (fileBelongIndex < deathMessages.getMessages().size()) {
+                            fileBelongIndex++;
+                            break;
                         }
                     }
-                });
-                for (int j = 0; j < fileBelongsTo.get().getArguments().size(); ++j) {
-                    string = string.replace("%" + (j + 1) + "$s", fileBelongsTo.get().getArguments().get(j).apply(source, tracker));
+                }
+                if (fileBelongsTo != null) {
+                    for (int argumentIndex = 0; argumentIndex < fileBelongsTo.getArguments().size(); argumentIndex++) {
+                        string = string.replace("%" + (argumentIndex + 1) + "$s", fileBelongsTo.getArguments().get(argumentIndex).apply(source, tracker));
+                        DieYourWay.LOGGER.info(string);
+                    }
                 }
                 return Text.Serializer.fromJson(string);
             }
@@ -119,7 +94,7 @@ public class DeathMessageGenerator {
 
     public static Text generateCommandDeathMessage(DeathMessages file, LivingEntity entity) {
         try {
-            int i = ThreadLocalRandom.current().nextInt(0, file.getMessages().size());
+            int i = new Random().nextInt(file.getMessages().size());
             String string = file.getMessages().get(i);
             Pair<DamageSource, Float> source = new Pair<>(DamageSourceAccessor.createDamageSource("command"), 1.0F);
             DamageTracker tracker = new DamageTracker(entity);
@@ -136,7 +111,7 @@ public class DeathMessageGenerator {
         }
     }
 
-    public static Text generateIndexCommandDeathMessage(DeathMessages file, int index, LivingEntity entity) {
+    public static Text generateIndexedCommandDeathMessage(DeathMessages file, int index, LivingEntity entity) {
         int newIndex = index - 1;
         try {
             String string = file.getMessages().get(newIndex);
@@ -148,7 +123,6 @@ public class DeathMessageGenerator {
             return Text.Serializer.fromJson(string);
         } catch (Exception e) {
             LiteralText text = new LiteralText("Could not find index " + index + " in file " + file.getIdentifier());
-            DieYourWay.LOGGER.error(e.getMessage());
             Style textStyle = Style.EMPTY;
             textStyle = textStyle.withFormatting(Formatting.RED);
             text.fillStyle(textStyle);

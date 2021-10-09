@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.message.argument;
+package io.github.merchantpug.dieyourway.argument;
 
 import com.google.gson.JsonObject;
 import io.github.apace100.calio.data.SerializableData;

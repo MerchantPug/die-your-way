@@ -22,8 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package io.github.merchantpug.dieyourway.message.condition;
+package io.github.merchantpug.dieyourway.condition;
 
+import io.github.apace100.apoli.Apoli;
+import io.github.apace100.apoli.power.factory.condition.ConditionFactory;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataType;
 import io.github.apace100.calio.data.SerializableDataTypes;
@@ -36,6 +38,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidFillable;
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtHelper;
 import net.minecraft.state.property.Property;
 import net.minecraft.tag.Tag;
 import net.minecraft.util.math.BlockPos;
@@ -172,6 +176,15 @@ public class DYWBlockConditions {
                 }
                 return false;
             }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("nbt"), new SerializableData()
+                .add("nbt", SerializableDataTypes.NBT),
+                (data, block) -> {
+                    NbtCompound nbt = new NbtCompound();
+                    if(block.getBlockEntity() != null) {
+                        nbt = block.getBlockEntity().writeNbt(nbt);
+                    }
+                    return NbtHelper.matches((NbtCompound)data.get("nbt"), nbt, true);
+                }));
     }
 
     private static void register(DYWConditionFactory<CachedBlockPosition> DYWConditionFactory) {

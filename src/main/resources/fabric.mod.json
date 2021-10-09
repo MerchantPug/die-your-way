@@ -3,8 +3,8 @@
   "id": "dieyourway",
   "version": "${version}",
 
-  "name": "Die Your Way",
-  "description": "E.",
+  "name": "DieYourWay",
+  "description": "Data driven death message mod.",
   "authors": [
     "Pug"
   ],

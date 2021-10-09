@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.mixin;
+package io.github.merchantpug.dieyourway.mixin.apoli;
 
 import io.github.apace100.calio.Calio;
 import io.github.merchantpug.dieyourway.access.MovingEntity;

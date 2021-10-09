@@ -1,14 +1,10 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "io.github.merchantpug.dieyourway.mixin",
+  "package": "io.github.merchantpug.dieyourway.mixin.message",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ClientAdvancementManagerAccessor",
-    "ClientPlayerInteractionManagerAccessor",
-    "EntityMixin",
-    "ServerPlayerEntityMixin",
-    "ServerPlayerInteractionManagerAccessor"
+    "ServerPlayerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

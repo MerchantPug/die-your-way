@@ -5,12 +5,12 @@ import io.github.apace100.apoli.power.factory.condition.ConditionFactory;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.data.DYWDataTypes;
-import io.github.merchantpug.dieyourway.message.argument.ArgumentFactory;
-import io.github.merchantpug.dieyourway.message.condition.DYWConditionFactory;
+import io.github.merchantpug.dieyourway.argument.ArgumentFactory;
+import io.github.merchantpug.dieyourway.condition.DYWConditionFactory;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
@@ -28,13 +28,15 @@ public class DeathMessages {
             .add("override", SerializableDataTypes.BOOLEAN, false);
 
 
-    private Identifier identifier;
-    private int loadingOrder;
+    private final Identifier identifier;
+    private final int loadingOrder;
     private DYWConditionFactory<Pair<DamageSource, Float>>.Instance damageCondition;
-    private DYWConditionFactory<LivingEntity>.Instance condition;
+    private DYWConditionFactory<Pair<Entity, Entity>>.Instance biEntityCondition;
+    private DYWConditionFactory<Entity>.Instance condition;
     private ConditionFactory<Pair<DamageSource, Float>>.Instance apoliDamageCondition;
-    private ConditionFactory<LivingEntity>.Instance apoliCondition;
-    private boolean override;
+    private ConditionFactory<Pair<Entity, Entity>>.Instance apoliBiEntityCondition;
+    private ConditionFactory<Entity>.Instance apoliCondition;
+    private final boolean override;
 
     private List<String> messages = new ArrayList<>();
     private List<ArgumentFactory<String>.Instance> arguments = new ArrayList<>();
@@ -59,7 +61,11 @@ public class DeathMessages {
         return damageCondition;
     }
 
-    public DYWConditionFactory<LivingEntity>.Instance getCondition() {
+    public DYWConditionFactory<Pair<Entity, Entity>>.Instance getBiEntityCondition() {
+        return biEntityCondition;
+    }
+
+    public DYWConditionFactory<Entity>.Instance getCondition() {
         return condition;
     }
 
@@ -67,7 +73,11 @@ public class DeathMessages {
         return apoliDamageCondition;
     }
 
-    public ConditionFactory<LivingEntity>.Instance getApoliCondition() {
+    public ConditionFactory<Pair<Entity, Entity>>.Instance getApoliBiEntityCondition() {
+        return apoliBiEntityCondition;
+    }
+
+    public ConditionFactory<Entity>.Instance getApoliCondition() {
         return apoliCondition;
     }
 
@@ -102,8 +112,15 @@ public class DeathMessages {
     public void write(PacketByteBuf buffer) {
         SerializableData.Instance data = DATA.new Instance();
         data.set("loading_order", loadingOrder);
-        data.set("damage_condition", damageCondition);
-        data.set("condition", condition);
+        if (FabricLoader.getInstance().isModLoaded("apoli")) {
+            data.set("damage_condition", apoliDamageCondition);
+            data.set("bientity_condition", apoliBiEntityCondition);
+            data.set("condition", apoliCondition);
+        } else {
+            data.set("damage_condition", damageCondition);
+            data.set("bientity_condition", biEntityCondition);
+            data.set("condition", condition);
+        }
         data.set("messages", messages);
         data.set("arguments", arguments);
         data.set("override", override);
@@ -114,26 +131,16 @@ public class DeathMessages {
     public static DeathMessages createFromData(Identifier id, SerializableData.Instance data) {
         DeathMessages deathMessage = new DeathMessages(id, data.getInt("loading_order"), data.getBoolean("override"));
         if (FabricLoader.getInstance().isModLoaded("apoli")) {
-            if (data.isPresent("damage_condition")) {
-                deathMessage.apoliDamageCondition = (ConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
-            }
-            if (data.isPresent("condition")) {
-                deathMessage.apoliCondition = (ConditionFactory<LivingEntity>.Instance)data.get("condition");
-            }
+            if (data.isPresent("damage_condition")) deathMessage.apoliDamageCondition = (ConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
+            if (data.isPresent("bientity_condition")) deathMessage.apoliBiEntityCondition = (ConditionFactory<Pair<Entity, Entity>>.Instance) data.get("bientity_condition");
+            if (data.isPresent("condition")) deathMessage.apoliCondition = (ConditionFactory<Entity>.Instance)data.get("condition");
         } else {
-            if (data.isPresent("damage_condition")) {
-                deathMessage.damageCondition = (DYWConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
-            }
-            if (data.isPresent("condition")) {
-                deathMessage.condition = (DYWConditionFactory<LivingEntity>.Instance)data.get("condition");
-            }
+            if (data.isPresent("damage_condition")) deathMessage.damageCondition = (DYWConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
+            if (data.isPresent("bientity_condition")) deathMessage.biEntityCondition = (DYWConditionFactory<Pair<Entity, Entity>>.Instance) data.get("bientity_condition");
+            if (data.isPresent("condition")) deathMessage.condition = (DYWConditionFactory<Entity>.Instance)data.get("condition");
         }
-        if(data.isPresent("messages")) {
-            ((List<String>)data.get("messages")).forEach(deathMessage::addMessage);
-        }
-        if (data.isPresent("arguments")) {
-            ((List<ArgumentFactory<String>.Instance>)data.get("arguments")).forEach(deathMessage::addArguments);
-        }
+        if(data.isPresent("messages")) ((List<String>)data.get("messages")).forEach(deathMessage::addMessage);
+        if (data.isPresent("arguments")) ((List<ArgumentFactory<String>.Instance>)data.get("arguments")).forEach(deathMessage::addArguments);
         return deathMessage;
     }
 

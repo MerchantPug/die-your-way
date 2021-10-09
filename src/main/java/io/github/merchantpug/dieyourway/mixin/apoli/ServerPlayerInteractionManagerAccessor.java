@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.mixin;
+package io.github.merchantpug.dieyourway.mixin.apoli;
 
 import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.util.math.BlockPos;

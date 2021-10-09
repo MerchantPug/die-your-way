@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.message.argument;
+package io.github.merchantpug.dieyourway.argument;
 
 import io.github.apace100.calio.data.SerializableData;
 import io.github.merchantpug.dieyourway.DieYourWay;

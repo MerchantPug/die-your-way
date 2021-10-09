@@ -1,4 +1,4 @@
-package io.github.merchantpug.dieyourway.mixin;
+package io.github.merchantpug.dieyourway.mixin.apoli;
 
 import net.minecraft.advancement.Advancement;
 import net.minecraft.advancement.AdvancementProgress;

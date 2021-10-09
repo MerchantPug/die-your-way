@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package io.github.merchantpug.dieyourway.message.condition;
+package io.github.merchantpug.dieyourway.condition;
 
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
@@ -99,12 +99,7 @@ public class DYWItemConditions {
                 (data, stack) -> stack.hasCustomName()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("custom_name"), new SerializableData()
                 .add("name", SerializableDataTypes.STRING),
-                (data, stack) ->  {
-                    if (stack.hasCustomName()) {
-                        return stack.getName().asString().equals(data.getString("name"));
-                    }
-                    return false;
-                }));
+                (data, stack) -> stack.getName().asString().equals(data.getString("name"))));
     }
 
     private static void register(DYWConditionFactory<ItemStack> DYWConditionFactory) {

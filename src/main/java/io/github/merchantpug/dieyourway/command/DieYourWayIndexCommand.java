@@ -19,7 +19,7 @@ public class DieYourWayIndexCommand {
                             try {
                                 DeathMessages file = DieYourWayArgumentType.getMessages(command, "file");
                                 int index = IntegerArgumentType.getInteger(command, "index");
-                                command.getSource().sendFeedback(DeathMessageGenerator.generateIndexCommandDeathMessage(file, index, command.getSource().getPlayer()), true);
+                                command.getSource().sendFeedback(DeathMessageGenerator.generateIndexedCommandDeathMessage(file, index, command.getSource().getPlayer()), true);
                             } catch (Exception e) {
                                 command.getSource().sendError(new LiteralText(e.getMessage()));
                             }

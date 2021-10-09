@@ -1,21 +1,15 @@
-package io.github.merchantpug.dieyourway.message.argument;
+package io.github.merchantpug.dieyourway.argument;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import io.github.apace100.calio.data.SerializableData;
-import io.github.merchantpug.dieyourway.message.condition.DYWConditionFactory;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.DamageTracker;
+import io.github.merchantpug.dieyourway.condition.DYWConditionFactory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.JsonHelper;
-import net.minecraft.util.Pair;
 import net.minecraft.util.registry.Registry;
 
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class ArgumentType {
 

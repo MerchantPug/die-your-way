@@ -16,9 +16,7 @@ public class DYWApoliItemConditions {
         register(new ConditionFactory<>(DieYourWay.identifier("custom_name"), new SerializableData()
                 .add("name", SerializableDataTypes.STRING),
                 (data, stack) ->  {
-                    if (stack.hasCustomName()) {
-                        return stack.getName().asString().equals(data.getString("name"));
-                    }
+                    if (stack.hasCustomName()) return stack.getName().asString().equals(data.getString("name"));
                     return false;
                 }));
     }

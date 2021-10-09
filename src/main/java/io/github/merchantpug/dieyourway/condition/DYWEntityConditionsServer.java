@@ -22,15 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-package io.github.merchantpug.dieyourway.message.condition;
+package io.github.merchantpug.dieyourway.condition;
 
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
-import io.github.merchantpug.dieyourway.mixin.ServerPlayerInteractionManagerAccessor;
+import io.github.merchantpug.dieyourway.mixin.apoli.ServerPlayerInteractionManagerAccessor;
 import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import net.minecraft.advancement.Advancement;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -73,7 +73,7 @@ public final class DYWEntityConditionsServer {
         }));
     }
 
-    private static void register(DYWConditionFactory<LivingEntity> DYWConditionFactory) {
+    private static void register(DYWConditionFactory<Entity> DYWConditionFactory) {
         Registry.register(DYWRegistries.ENTITY_CONDITION, DYWConditionFactory.getSerializerId(), DYWConditionFactory);
     }
 }

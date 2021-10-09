@@ -63,21 +63,16 @@ public class DeathMessageGenerator {
                 int i = new Random().nextInt(deathMessagesList.size());
                 string = deathMessagesList.get(i);
                 int fileBelongIndex = 0;
-                DeathMessages fileBelongsTo = null;
                 for (DeathMessages deathMessages : fileArrayList) {
-                    while (fileBelongsTo == null) {
+                    while (fileBelongIndex < deathMessagesList.size()) {
                         if (fileBelongIndex == i) {
-                            fileBelongsTo = deathMessages;
+                            for (int argumentIndex = 0; argumentIndex < deathMessages.getArguments().size(); argumentIndex++) {
+                                string = string.replaceAll("%" + (argumentIndex + 1) + "\\$s", deathMessages.getArguments().get(argumentIndex).apply(source, tracker));
+                            }
+                            break;
                         } else if (fileBelongIndex < deathMessages.getMessages().size()) {
                             fileBelongIndex++;
-                            break;
                         }
-                    }
-                }
-                if (fileBelongsTo != null) {
-                    for (int argumentIndex = 0; argumentIndex < fileBelongsTo.getArguments().size(); argumentIndex++) {
-                        string = string.replace("%" + (argumentIndex + 1) + "$s", fileBelongsTo.getArguments().get(argumentIndex).apply(source, tracker));
-                        DieYourWay.LOGGER.info(string);
                     }
                 }
                 return Text.Serializer.fromJson(string);

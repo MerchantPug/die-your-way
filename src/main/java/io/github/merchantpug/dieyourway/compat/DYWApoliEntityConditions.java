@@ -5,9 +5,7 @@ import io.github.apace100.apoli.registry.ApoliRegistries;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
-import io.github.merchantpug.dieyourway.condition.DYWConditionFactory;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.registry.Registry;
 
 public class DYWApoliEntityConditions {

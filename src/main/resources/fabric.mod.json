@@ -9,7 +9,7 @@
     "Pug"
   ],
   "contact": {
-    "homepage": "",
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/die-your-way",
     "sources": "https://github.com/MerchantPug/die-your-way"
   },
 
@@ -21,9 +21,6 @@
     "main": [
       "io.github.merchantpug.dieyourway.DieYourWay"
     ],
-    "client": [
-      "io.github.merchantpug.dieyourway.DieYourWayClient"
-    ],
     "server": [
       "io.github.merchantpug.dieyourway.DieYourWayServer"
     ]
@@ -31,12 +28,16 @@
   "mixins": [
     "dieyourway.mixins.json"
   ],
-
+  "custom": {
+    "modmenu": {
+      "badges": ["library"]
+    }
+  },
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",
-    "minecraft": "1.17.x",
-    "java": ">=16",
-    "calio": ">=1.0.2"
+    "minecraft": "1.18.x",
+    "java": ">=17",
+    "calio": ">=1.4.1"
   }
 }

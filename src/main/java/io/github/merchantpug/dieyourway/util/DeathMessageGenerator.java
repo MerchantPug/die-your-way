@@ -64,7 +64,7 @@ public class DeathMessageGenerator {
                 string = deathMessagesList.get(i);
                 int fileBelongIndex = 0;
                 for (DeathMessages deathMessages : fileArrayList) {
-                    while (fileBelongIndex < deathMessagesList.size()) {
+                    if (fileBelongIndex < deathMessagesList.size()) {
                         if (fileBelongIndex == i) {
                             for (int argumentIndex = 0; argumentIndex < deathMessages.getArguments().size(); argumentIndex++) {
                                 string = string.replaceAll("%" + (argumentIndex + 1) + "\\$s", deathMessages.getArguments().get(argumentIndex).apply(source, tracker));

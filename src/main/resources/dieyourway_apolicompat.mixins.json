@@ -5,11 +5,8 @@
   "plugin": "io.github.merchantpug.dieyourway.mixin.ApoliMixinPlugin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ClientAdvancementManagerAccessor",
-    "ClientPlayerInteractionManagerAccessor",
     "EntityAccessor",
     "EntityMixin",
-    "LivingEntityMixin",
     "ServerPlayerInteractionManagerAccessor"
   ],
   "injectors": {

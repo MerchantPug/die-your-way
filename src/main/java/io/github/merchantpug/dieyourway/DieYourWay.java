@@ -12,13 +12,17 @@ import io.github.merchantpug.dieyourway.data.DYWDataTypes;
 import io.github.merchantpug.dieyourway.message.DeathMessages;
 import io.github.merchantpug.dieyourway.message.DeathMessagesManager;
 import io.github.merchantpug.dieyourway.argument.Arguments;
+import io.github.merchantpug.dieyourway.message.DeathMessagesRegistry;
+import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.command.argument.ArgumentTypes;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.resource.ResourceType;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,8 +31,12 @@ public class DieYourWay implements ModInitializer {
 	public static String MODID = "dieyourway";
 	public static Logger LOGGER = LogManager.getLogger(DieYourWay.class);
 
+	public static MinecraftServer server;
+
 	@Override
 	public void onInitialize() {
+		ServerLifecycleEvents.SERVER_STARTED.register(s -> server = s);
+
 		if (FabricLoader.getInstance().isModLoaded("apoli")) {
 			NamespaceAlias.addAlias(MODID, "apoli");
 			DYWApoliItemConditions.register();

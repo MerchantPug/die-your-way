@@ -13,7 +13,7 @@ import static net.minecraft.server.command.CommandManager.literal;
 public class DieYourWayIndexCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(literal("dieyourway").requires(cs -> cs.hasPermissionLevel(2))
-                .then(argument("file", DieYourWayArgumentType.file())
+                .then(argument("file", DieYourWayArgumentType.file()).suggests((serverCommandSourceCommandContext, suggestionsBuilder) -> DieYourWaySuggestion.suggestions(suggestionsBuilder))
                     .then(argument("index", IntegerArgumentType.integer())
                         .executes((command) -> {
                             try {

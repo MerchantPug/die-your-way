@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class DeathMessagesRegistry {
-
     private static HashMap<Identifier, DeathMessages> idToDeathMessages = new HashMap<>();
 
     public static DeathMessages register(DeathMessages deathMessages) {

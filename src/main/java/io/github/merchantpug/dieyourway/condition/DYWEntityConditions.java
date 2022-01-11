@@ -30,6 +30,8 @@ import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
 import io.github.merchantpug.dieyourway.access.MovingEntity;
 import io.github.merchantpug.dieyourway.access.SubmergableEntity;
+import io.github.merchantpug.dieyourway.condition.entity.ElytraFlightPossibleCondition;
+import io.github.merchantpug.dieyourway.condition.entity.RaycastCondition;
 import io.github.merchantpug.dieyourway.data.DYWDataTypes;
 import io.github.merchantpug.dieyourway.mixin.apoli.EntityAccessor;
 import io.github.merchantpug.dieyourway.registry.DYWRegistries;
@@ -39,7 +41,6 @@ import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeInstance;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -99,7 +100,7 @@ public class DYWEntityConditions {
                                 data.getFloat("offset_x") * entity.getBoundingBox().getXLength(),
                                 data.getFloat("offset_y") * entity.getBoundingBox().getYLength(),
                                 data.getFloat("offset_z") * entity.getBoundingBox().getZLength())
-                ).findAny().isPresent()));
+                ).iterator().hasNext()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("brightness"), new SerializableData()
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.FLOAT),
@@ -180,7 +181,7 @@ public class DYWEntityConditions {
                 .add("equipment_slot", SerializableDataTypes.EQUIPMENT_SLOT)
                 .add("item_condition", DYWDataTypes.ITEM_CONDITION),
                 (data, entity) -> entity instanceof LivingEntity && ((DYWConditionFactory<ItemStack>.Instance) data.get("item_condition")).test(
-                        ((LivingEntity) entity).getEquippedStack((EquipmentSlot) data.get("equipment_slot")))));
+                        ((LivingEntity) entity).getEquippedStack(data.get("equipment_slot")))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("attribute"), new SerializableData()
                 .add("attribute", SerializableDataTypes.ATTRIBUTE)
                 .add("comparison", DYWDataTypes.COMPARISON)
@@ -188,7 +189,7 @@ public class DYWEntityConditions {
                 (data, entity) -> {
                     double attrValue = 0F;
                     if(entity instanceof LivingEntity living) {
-                        EntityAttributeInstance attributeInstance = living.getAttributeInstance((EntityAttribute) data.get("attribute"));
+                        EntityAttributeInstance attributeInstance = living.getAttributeInstance(data.get("attribute"));
                         if(attributeInstance != null) {
                             attrValue = attributeInstance.getValue();
                         }
@@ -533,11 +534,15 @@ public class DYWEntityConditions {
         register(new DYWConditionFactory<>(DieYourWay.identifier("exists"), new SerializableData(), (data, entity) -> entity != null));
         register(new DYWConditionFactory<>(DieYourWay.identifier("creative_flying"), new SerializableData(),
                 (data, entity) -> entity instanceof PlayerEntity && ((PlayerEntity)entity).getAbilities().flying));
+        register(RaycastCondition.getFactory());
+        register(ElytraFlightPossibleCondition.getFactory());
+        DistanceFromCoordinatesConditionRegistry.registerEntityCondition(DYWEntityConditions::register);
+
         register(new DYWConditionFactory<>(DieYourWay.identifier("has_name"), new SerializableData(),
         (data, entity) -> entity.hasCustomName()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("custom_name"), new SerializableData()
                 .add("name", SerializableDataTypes.STRING),
-                (data, entity) -> entity.getCustomName().asString().equals(data.getString("name"))));
+                (data, entity) -> entity.getCustomName() != null && entity.getCustomName().asString().equals(data.getString("name"))));
     }
 
     private static void register(DYWConditionFactory<Entity> DYWConditionFactory) {

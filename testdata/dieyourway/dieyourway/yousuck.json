@@ -1,0 +1,9 @@
+{
+  "damage_condition": {
+    "type": "dieyourway:name",
+    "name": "sweetBerryBush"
+  },
+  "messages": [
+    "\"This player who I won't be sharing the name of sucks!\""
+  ]
+}

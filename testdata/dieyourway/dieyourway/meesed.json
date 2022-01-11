@@ -1,0 +1,15 @@
+{
+  "damage_condition": {
+    "type": "dieyourway:name",
+    "name": "sweetBerryBush"
+  },
+  "messages": [
+    "[\"\",%1$s,\" sucks!\"]",
+    "[\"\",%1$s,{\"text\":\" has been meesed\",\"bold\":true,\"color\":\"dark_red\"}]"
+  ],
+  "arguments": [
+    {
+      "type": "dieyourway:dead_entity"
+    }
+  ]
+}

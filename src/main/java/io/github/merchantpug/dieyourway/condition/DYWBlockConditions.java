@@ -24,12 +24,11 @@ SOFTWARE.
 
 package io.github.merchantpug.dieyourway.condition;
 
-import io.github.apace100.apoli.Apoli;
-import io.github.apace100.apoli.power.factory.condition.ConditionFactory;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataType;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
+import io.github.merchantpug.dieyourway.condition.block.MaterialCondition;
 import io.github.merchantpug.dieyourway.data.DYWDataTypes;
 import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import io.github.merchantpug.dieyourway.util.Comparison;
@@ -181,10 +180,33 @@ public class DYWBlockConditions {
                 (data, block) -> {
                     NbtCompound nbt = new NbtCompound();
                     if(block.getBlockEntity() != null) {
-                        nbt = block.getBlockEntity().writeNbt(nbt);
+                        nbt = block.getBlockEntity().createNbtWithIdentifyingData();
                     }
                     return NbtHelper.matches((NbtCompound)data.get("nbt"), nbt, true);
                 }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("slipperiness"), new SerializableData()
+                .add("comparison", DYWDataTypes.COMPARISON)
+                .add("compare_to", SerializableDataTypes.FLOAT),
+                (data, block) -> {
+                    BlockState state = block.getBlockState();
+                    return ((Comparison)data.get("comparison")).compare(state.getBlock().getSlipperiness(), data.getFloat("compare_to"));
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("blast_resistance"), new SerializableData()
+                .add("comparison", DYWDataTypes.COMPARISON)
+                .add("compare_to", SerializableDataTypes.FLOAT),
+                (data, block) -> {
+                    BlockState state = block.getBlockState();
+                    return ((Comparison)data.get("comparison")).compare(state.getBlock().getBlastResistance(), data.getFloat("compare_to"));
+                }));
+        register(new DYWConditionFactory<>(DieYourWay.identifier("hardness"), new SerializableData()
+                .add("comparison", DYWDataTypes.COMPARISON)
+                .add("compare_to", SerializableDataTypes.FLOAT),
+                (data, block) -> {
+                    BlockState state = block.getBlockState();
+                    return ((Comparison)data.get("comparison")).compare(state.getBlock().getHardness(), data.getFloat("compare_to"));
+                }));
+        register(MaterialCondition.getFactory());
+        DistanceFromCoordinatesConditionRegistry.registerBlockCondition(DYWBlockConditions::register);
     }
 
     private static void register(DYWConditionFactory<CachedBlockPosition> DYWConditionFactory) {

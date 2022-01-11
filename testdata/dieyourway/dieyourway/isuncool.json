@@ -1,0 +1,20 @@
+{
+  "damage_condition": {
+    "type": "dieyourway:attacker",
+    "entity_condition": {
+      "type": "dieyourway:entity_type",
+      "entity_type": "minecraft:zombie"
+    }
+  },
+  "messages": [
+    "[\"\",%1$s,{\"text\":\" is very uncool thanks to \",\"bold\":true,\"color\":\"green\"},%2$s]"
+  ],
+  "arguments": [
+    {
+      "type": "dieyourway:dead_entity"
+    },
+    {
+      "type": "dieyourway:attacker"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -21,19 +22,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Entity.class)
 public class EntityMixin implements MovingEntity, SubmergableEntity {
 
-    @Shadow
+    @Shadow @Unique
     public World world;
 
-    @Shadow
+    @Shadow @Unique
     public float distanceTraveled;
 
-    @Shadow @Nullable
+    @Shadow @Nullable @Unique
     protected Tag<Fluid> submergedFluidTag;
 
-    @Shadow protected Object2DoubleMap<Tag<Fluid>> fluidHeight;
+    @Shadow @Unique protected Object2DoubleMap<Tag<Fluid>> fluidHeight;
 
-    private boolean isMoving;
-    private float distanceBefore;
+    @Unique private boolean isMoving;
+    @Unique private float distanceBefore;
 
     @Inject(method = "move", at = @At("HEAD"))
     private void saveDistanceTraveled(MovementType type, Vec3d movement, CallbackInfo ci) {

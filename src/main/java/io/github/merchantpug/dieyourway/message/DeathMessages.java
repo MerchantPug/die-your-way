@@ -131,13 +131,13 @@ public class DeathMessages {
     public static DeathMessages createFromData(Identifier id, SerializableData.Instance data) {
         DeathMessages deathMessage = new DeathMessages(id, data.getInt("loading_order"), data.getBoolean("override"));
         if (FabricLoader.getInstance().isModLoaded("apoli")) {
-            if (data.isPresent("damage_condition")) deathMessage.apoliDamageCondition = (ConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
-            if (data.isPresent("bientity_condition")) deathMessage.apoliBiEntityCondition = (ConditionFactory<Pair<Entity, Entity>>.Instance) data.get("bientity_condition");
-            if (data.isPresent("condition")) deathMessage.apoliCondition = (ConditionFactory<Entity>.Instance)data.get("condition");
+            if (data.isPresent("damage_condition")) deathMessage.apoliDamageCondition = data.get("damage_condition");
+            if (data.isPresent("bientity_condition")) deathMessage.apoliBiEntityCondition = data.get("bientity_condition");
+            if (data.isPresent("condition")) deathMessage.apoliCondition = data.get("condition");
         } else {
-            if (data.isPresent("damage_condition")) deathMessage.damageCondition = (DYWConditionFactory<Pair<DamageSource, Float>>.Instance) data.get("damage_condition");
-            if (data.isPresent("bientity_condition")) deathMessage.biEntityCondition = (DYWConditionFactory<Pair<Entity, Entity>>.Instance) data.get("bientity_condition");
-            if (data.isPresent("condition")) deathMessage.condition = (DYWConditionFactory<Entity>.Instance)data.get("condition");
+            if (data.isPresent("damage_condition")) deathMessage.damageCondition = data.get("damage_condition");
+            if (data.isPresent("bientity_condition")) deathMessage.biEntityCondition = data.get("bientity_condition");
+            if (data.isPresent("condition")) deathMessage.condition = data.get("condition");
         }
         if(data.isPresent("messages")) ((List<String>)data.get("messages")).forEach(deathMessage::addMessage);
         if (data.isPresent("arguments")) ((List<ArgumentFactory<String>.Instance>)data.get("arguments")).forEach(deathMessage::addArguments);

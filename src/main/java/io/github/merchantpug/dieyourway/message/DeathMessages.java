@@ -12,6 +12,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageTracker;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
@@ -32,10 +33,10 @@ public class DeathMessages {
     private final int loadingOrder;
     private DYWConditionFactory<Pair<DamageSource, Float>>.Instance damageCondition;
     private DYWConditionFactory<Pair<Entity, Entity>>.Instance biEntityCondition;
-    private DYWConditionFactory<Entity>.Instance condition;
+    private DYWConditionFactory<Entity>.Instance entityCondition;
     private ConditionFactory<Pair<DamageSource, Float>>.Instance apoliDamageCondition;
     private ConditionFactory<Pair<Entity, Entity>>.Instance apoliBiEntityCondition;
-    private ConditionFactory<Entity>.Instance apoliCondition;
+    private ConditionFactory<Entity>.Instance apoliEntityCondition;
     private final boolean override;
 
     private List<String> messages = new ArrayList<>();
@@ -66,7 +67,7 @@ public class DeathMessages {
     }
 
     public DYWConditionFactory<Entity>.Instance getCondition() {
-        return condition;
+        return entityCondition;
     }
 
     public ConditionFactory<Pair<DamageSource, Float>>.Instance getApoliDamageCondition() {
@@ -78,7 +79,7 @@ public class DeathMessages {
     }
 
     public ConditionFactory<Entity>.Instance getApoliCondition() {
-        return apoliCondition;
+        return apoliEntityCondition;
     }
 
     public boolean hasMessage() {
@@ -87,6 +88,14 @@ public class DeathMessages {
 
     public boolean hasArguments() {
         return this.arguments.size() > 0;
+    }
+
+    public boolean doesMatchCondition(Pair<DamageSource, Float> source, DamageTracker tracker) {
+        Pair<Entity, Entity> pair = new Pair(source.getLeft().getAttacker(), tracker.getEntity());
+        if (FabricLoader.getInstance().isModLoaded("apoli")) {
+            return (apoliDamageCondition == null || apoliDamageCondition.test(source)) && (apoliBiEntityCondition == null || source.getLeft().getAttacker() != null && apoliBiEntityCondition.test(pair)) && (apoliEntityCondition == null || apoliEntityCondition.test(tracker.getEntity()));
+        }
+        return (damageCondition == null || damageCondition.test(source)) && (biEntityCondition == null || source.getLeft().getAttacker() != null && biEntityCondition.test(pair)) && (entityCondition == null || entityCondition.test(tracker.getEntity()));
     }
 
     public int loadingOrderValue() {
@@ -115,11 +124,11 @@ public class DeathMessages {
         if (FabricLoader.getInstance().isModLoaded("apoli")) {
             data.set("damage_condition", apoliDamageCondition);
             data.set("bientity_condition", apoliBiEntityCondition);
-            data.set("condition", apoliCondition);
+            data.set("condition", apoliEntityCondition);
         } else {
             data.set("damage_condition", damageCondition);
             data.set("bientity_condition", biEntityCondition);
-            data.set("condition", condition);
+            data.set("condition", entityCondition);
         }
         data.set("messages", messages);
         data.set("arguments", arguments);
@@ -133,11 +142,11 @@ public class DeathMessages {
         if (FabricLoader.getInstance().isModLoaded("apoli")) {
             if (data.isPresent("damage_condition")) deathMessage.apoliDamageCondition = data.get("damage_condition");
             if (data.isPresent("bientity_condition")) deathMessage.apoliBiEntityCondition = data.get("bientity_condition");
-            if (data.isPresent("condition")) deathMessage.apoliCondition = data.get("condition");
+            if (data.isPresent("condition")) deathMessage.apoliEntityCondition = data.get("condition");
         } else {
             if (data.isPresent("damage_condition")) deathMessage.damageCondition = data.get("damage_condition");
             if (data.isPresent("bientity_condition")) deathMessage.biEntityCondition = data.get("bientity_condition");
-            if (data.isPresent("condition")) deathMessage.condition = data.get("condition");
+            if (data.isPresent("condition")) deathMessage.entityCondition = data.get("condition");
         }
         if(data.isPresent("messages")) ((List<String>)data.get("messages")).forEach(deathMessage::addMessage);
         if (data.isPresent("arguments")) ((List<ArgumentFactory<String>.Instance>)data.get("arguments")).forEach(deathMessage::addArguments);

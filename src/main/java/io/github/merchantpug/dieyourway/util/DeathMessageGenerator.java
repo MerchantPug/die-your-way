@@ -1,11 +1,8 @@
 package io.github.merchantpug.dieyourway.util;
 
 import io.github.apace100.calio.mixin.DamageSourceAccessor;
-import io.github.merchantpug.dieyourway.DieYourWay;
 import io.github.merchantpug.dieyourway.message.DeathMessages;
 import io.github.merchantpug.dieyourway.message.DeathMessagesRegistry;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.damage.DamageTracker;
@@ -16,67 +13,47 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.*;
 
 public class DeathMessageGenerator {
     public static Text generateDeathMessage(Pair<DamageSource, Float> source, DamageTracker tracker) {
         Iterable<Map.Entry<Identifier, DeathMessages>> entries = DeathMessagesRegistry.entries();
         ArrayList<DeathMessages> fileArrayList = new ArrayList<>();
         entries.forEach(deathMessagesEntry -> {
-            boolean damageCondition;
-            boolean biEntityCondition;
-            boolean entityCondition;
-            if (FabricLoader.getInstance().isModLoaded("apoli")) {
-                damageCondition = deathMessagesEntry.getValue().getApoliDamageCondition() == null || deathMessagesEntry.getValue().getApoliDamageCondition().test(source);
-                biEntityCondition = deathMessagesEntry.getValue().getApoliBiEntityCondition() == null || source.getLeft().getAttacker() != null && deathMessagesEntry.getValue().getApoliBiEntityCondition().test(new Pair<>(tracker.getEntity(), source.getLeft().getAttacker()));
-                entityCondition = deathMessagesEntry.getValue().getApoliCondition() == null || !deathMessagesEntry.getValue().getApoliCondition().test(tracker.getEntity());
-            } else {
-                damageCondition = deathMessagesEntry.getValue().getDamageCondition() == null || deathMessagesEntry.getValue().getDamageCondition().test(source);
-                biEntityCondition = deathMessagesEntry.getValue().getBiEntityCondition() == null || source.getLeft().getAttacker() != null && deathMessagesEntry.getValue().getBiEntityCondition().test(new Pair<>(tracker.getEntity(), source.getLeft().getAttacker()));
-                entityCondition = deathMessagesEntry.getValue().getCondition() == null || !deathMessagesEntry.getValue().getCondition().test(tracker.getEntity());
-            }
-            if (damageCondition && biEntityCondition && entityCondition) {
+            if (deathMessagesEntry.getValue().doesMatchCondition(source, tracker)) {
                 fileArrayList.add(deathMessagesEntry.getValue());
             }
         });
         fileArrayList.sort(Comparator.comparingInt(DeathMessages::loadingOrderValue));
-        ArrayList<String> deathMessagesList = new ArrayList<>();
+        List<Pair<DeathMessages, String>> deathMessagesList = new ArrayList<>();
         for (DeathMessages deathMessages : fileArrayList) {
             if (deathMessages.doesOverride()) {
                 deathMessagesList.clear();
-                deathMessagesList.addAll(deathMessages.getMessages());
-                fileArrayList.removeIf(file -> !file.equals(deathMessages));
+                deathMessages.getMessages().forEach(message -> {
+                    deathMessagesList.add(new Pair<>(deathMessages, message));
+                });
+                deathMessagesList.removeIf(pair -> pair.getLeft() != deathMessages);
                 break;
             } else {
-                deathMessagesList.addAll(deathMessages.getMessages());
+                deathMessages.getMessages().forEach(message -> {
+                    deathMessagesList.add(new Pair<>(deathMessages, message));
+                });
             }
         }
-        String string;
+        String string = "";
         try {
-            if (!fileArrayList.isEmpty()) {
+            if (!deathMessagesList.isEmpty()) {
                 int i = new Random().nextInt(deathMessagesList.size());
-                string = deathMessagesList.get(i);
-                int fileBelongIndex = 0;
-                for (DeathMessages deathMessages : fileArrayList) {
-                    if (fileBelongIndex < deathMessagesList.size()) {
-                        if (fileBelongIndex == i) {
-                            for (int argumentIndex = 0; argumentIndex < deathMessages.getArguments().size(); argumentIndex++) {
-                                string = string.replaceAll("%" + (argumentIndex + 1) + "\\$s", deathMessages.getArguments().get(argumentIndex).apply(source, tracker));
-                            }
-                            break;
-                        } else if (fileBelongIndex < deathMessages.getMessages().size()) {
-                            fileBelongIndex++;
-                        }
-                    }
+                Pair<DeathMessages, String> selected = deathMessagesList.get(i);
+                string = selected.getRight();
+                for (int argumentIndex = 0; argumentIndex < selected.getLeft().getArguments().size(); ++argumentIndex) {
+                    string = string.replaceAll("%" + (argumentIndex + 1) + "\\$s", selected.getLeft().getArguments().get(argumentIndex).apply(source, tracker));
                 }
+            }
+            if (!string.equals("")) {
                 return Text.Serializer.fromJson(string);
             }
+            return null;
         } catch (Exception e) {
             LiteralText text = new LiteralText(e.getMessage());
             Style textStyle = Style.EMPTY;
@@ -84,7 +61,6 @@ public class DeathMessageGenerator {
             text.fillStyle(textStyle);
             return text;
         }
-        return null;
     }
 
     public static Text generateCommandDeathMessage(DeathMessages file, LivingEntity entity) {

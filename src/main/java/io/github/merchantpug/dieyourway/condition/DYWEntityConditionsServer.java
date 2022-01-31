@@ -64,7 +64,7 @@ public final class DYWEntityConditionsServer {
             if(entity instanceof ServerPlayerEntity) {
                 Advancement advancement = entity.getServer().getAdvancementLoader().get(id);
                 if(advancement == null) {
-                    DieYourWay.LOGGER.warn("Advancement \"" + id + "\" did not exist, but was referenced in an \"origins:advancement\" condition.");
+                    DieYourWay.LOGGER.warn("Advancement \"" + id + "\" did not exist, but was referenced in an \"dieyourway:advancement\" condition.");
                 } else {
                     return ((ServerPlayerEntity)entity).getAdvancementTracker().getProgress(advancement).isDone();
                 }

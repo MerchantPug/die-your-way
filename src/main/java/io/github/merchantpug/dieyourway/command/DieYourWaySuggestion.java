@@ -1,11 +1,9 @@
 package io.github.merchantpug.dieyourway.command;
 
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.github.merchantpug.dieyourway.message.DeathMessagesRegistry;
 
-import java.util.Collection;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 

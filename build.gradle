@@ -147,7 +147,7 @@ curseforge {
 				}
 			}
 			mainArtifact(remapJar) {
-				displayName = "${project.mod_name} ${project.mod_version} (MC ${project.minecraft_versions})"
+				displayName = "${project.mod_name} v${project.mod_version} (MC ${project.minecraft_versions})"
 				relations {
 					if(project.hasProperty("cf_required_dependencies")) {
 						project.cf_required_dependencies.split(", ").each { String slug ->
@@ -190,9 +190,9 @@ modrinth {
 
 		dependencies = deps
 
-		versionName = "${project.mod_name} ${project.mod_version} (MC ${project.minecraft_versions})"
+		versionName = "${project.mod_name} v${project.mod_version} (MC ${project.minecraft_versions})"
 
-		versionNumber = project.mod_version
+		versionNumber = "v${project.mod_version}"
 
 		changelog = generateMarkdownChangelog()
 

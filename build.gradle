@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'fabric-loom' version '0.12-SNAPSHOT'
 	id 'maven-publish'
 	id 'com.matthewprenger.cursegradle' version '1.4.0'
 	id 'com.modrinth.minotaur' version '2.1.1'
@@ -57,7 +57,7 @@ dependencies {
 String generateHTMLChangelog() {
 	String changelogText = ""
 
-	File file = file("latest_changes.md")
+	File file = file("${projectDir.toString()}/latest_changes.md")
 	if (file.exists()) {
 		file.eachLine { String line ->
 			String text = line;
@@ -121,7 +121,7 @@ String generateHTMLChangelog() {
 String generateMarkdownChangelog() {
 	String changelogText = ""
 
-	File file = file("latest_changes.md")
+	File file = file("${projectDir.toString()}/latest_changes.md")
 	if(file.exists()) {
 		file.eachLine { String line ->
 			if(!line.isBlank()) {
@@ -136,18 +136,18 @@ String generateMarkdownChangelog() {
 githubRelease {
 	token = System.getenv("GITHUB_TOKEN")
 
-	owner project.gh_owner
-	repo project.gh_repo
-	tagName "v${project.mod_version}"
-	targetCommitish project.gh_target_commitish
+	owner = project.gh_owner
+	repo = project.gh_repo
+	tagName = "v${project.mod_version}"
+	targetCommitish = project.gh_target_commitish
 
-	body generateMarkdownChangelog()
+	body = generateMarkdownChangelog()
 
-	overwrite true
+	overwrite = true
 
-	releaseName "${project.mod_name} v${project.mod_version} (MC ${project.gh_minecraft_versions})"
+	releaseName = "${project.mod_name} v${project.mod_version} (MC ${project.gh_minecraft_versions})"
 
-	releaseAssets = files("${project.buildDir}/libs/${archivesBaseName}-${version}.jar", "${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar").files
+	releaseAssets = files("${project.buildDir}/libs/${archivesBaseName}-${version}.jar", "${project.buildDir}/devlibs/${archivesBaseName}-${version}-dev.jar", "${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar", "${project.buildDir}/devlibs/${archivesBaseName}-${version}-sources-dev.jar").files
 }
 
 curseforge {
@@ -155,7 +155,7 @@ curseforge {
 	if (project.hasProperty("curseforge_project_id")) {
 		project {
 			id = project.cf_project_id
-			releaseType = 'release'
+			releaseType = project.cf_release_type
 			if (project.hasProperty("minecraft_versions")) {
 				def gameVersions = project.minecraft_versions.split(", ")
 				gameVersions.each { String gameVersion ->
@@ -185,28 +185,28 @@ import com.modrinth.minotaur.dependencies.ModDependency
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 
-	if(project.hasProperty("modrinth_id")) {
-		projectId = project.modrinth_id
+	if(project.hasProperty("mr_project_id")) {
+		projectId = project.mr_project_id
 
-		versionType = project.modrinth_version_type
+		versionType = project.mr_version_type
 
-		loaders = List.of("fabric");
+		loaders = [ "fabric" ]
 
 		if(project.hasProperty("mr_release_versions")) {
-			gameVersions = project.modrinth_release_versions.split(", ") as List
+			gameVersions = project.mr_release_versions.split(", ") as List
 		}
 
 		def deps = []
 
 		if(project.hasProperty("mr_required_dependencies")) {
-			project.modrinth_required_dep_ids.split(", ").each { String slug ->
+			project.mr_required_dependencies.split(", ").each { String slug ->
 				deps << new ModDependency(slug, "required")
 			}
 		}
 
 		dependencies = deps
 
-		versionName = "${project.mod_name} v${project.mod_version} (MC ${project.minecraft_versions})"
+		versionName = "${project.mod_name} v${project.mod_version} (MC ${project.mr_minecraft_versions})"
 
 		versionNumber = "v${project.mod_version}"
 
@@ -214,6 +214,8 @@ modrinth {
 
 		uploadFile = remapJar
 	}
+
+	debugMode = true
 }
 
 processResources {

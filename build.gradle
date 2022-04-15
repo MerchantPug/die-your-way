@@ -56,8 +56,6 @@ dependencies {
 String generateHTMLChangelog() {
 	String changelogText = ""
 
-	changelogText += "<h2>DieYourWay v${project.mod_version} - MC ${project.minecraft_versions}</h2>\n"
-
 	File file = file(System.getenv("CHANGELOG_PATH"))
 	if (file.exists()) {
 		file.eachLine { String line ->

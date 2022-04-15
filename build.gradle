@@ -3,6 +3,7 @@ plugins {
 	id 'maven-publish'
 	id 'com.matthewprenger.cursegradle' version '1.4.0'
 	id 'com.modrinth.minotaur' version '2.1.1'
+	id "com.github.breadmoirai.github-release" version "2.2.12"
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -56,7 +57,7 @@ dependencies {
 String generateHTMLChangelog() {
 	String changelogText = ""
 
-	File file = file(System.getenv("CHANGELOG_PATH"))
+	File file = file("latest_changes.md")
 	if (file.exists()) {
 		file.eachLine { String line ->
 			String text = line;
@@ -120,16 +121,33 @@ String generateHTMLChangelog() {
 String generateMarkdownChangelog() {
 	String changelogText = ""
 
-	File file = file(System.getenv("CHANGELOG_PATH"))
+	File file = file("latest_changes.md")
 	if(file.exists()) {
 		file.eachLine { String line ->
 			if(!line.isBlank()) {
-				changelog_text += "${line.stripIndent()}\n"
+				changelogText += "${line.stripIndent()}\n"
 			}
-			changelog_text += "&nbsp;  \n"
+			changelogText += "&nbsp;  \n"
 		}
 	}
 	return changelogText
+}
+
+githubRelease {
+	token = System.getenv("GITHUB_TOKEN")
+
+	owner project.gh_owner
+	repo project.gh_repo
+	tagName "v${project.mod_version}"
+	targetCommitish project.gh_target_commitish
+
+	body generateMarkdownChangelog()
+
+	overwrite true
+
+	releaseName "${project.mod_name} v${project.mod_version} (MC ${project.gh_minecraft_versions})"
+
+	releaseAssets = files("${project.buildDir}/libs/${archivesBaseName}-${version}.jar", "${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar").files
 }
 
 curseforge {

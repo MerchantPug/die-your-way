@@ -15,7 +15,7 @@ jobs:
       options: --user root
     steps:
       - name: Install Get Changelog CLI
-        run: npm install -g npm && npm install -g get-changelog-cli
+        run: npm install -g get-changelog-cli
 
       - name: Get changelog from release
         uses: rhysd/changelog-from-release/action@v2

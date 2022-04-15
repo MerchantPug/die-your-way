@@ -32,6 +32,7 @@ import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.registry.Registry;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public class DYWFluidConditions {
             (data, fluid) -> fluid.isStill()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("in_tag"), new SerializableData()
             .add("tag", SerializableDataTypes.FLUID_TAG),
-            (data, fluid) -> fluid.isIn((Tag<Fluid>)data.get("tag"))));
+            (data, fluid) -> fluid.isIn((TagKey<Fluid>)data.get("tag"))));
     }
 
     private static void register(DYWConditionFactory<FluidState> DYWConditionFactory) {

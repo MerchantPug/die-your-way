@@ -1,11 +1,11 @@
 package io.github.merchantpug.dieyourway.access;
 
 import net.minecraft.fluid.Fluid;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 
 public interface SubmergableEntity {
 
-    boolean dywIsSubmergedInLoosely(Tag<Fluid> fluidTag);
+    boolean dywIsSubmergedInLoosely(TagKey<Fluid> tag);
 
-    double dywGetFluidHeightLoosely(Tag<Fluid> fluidTag);
+    double dywGetFluidHeightLoosely(TagKey<Fluid> tag);
 }

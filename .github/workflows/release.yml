@@ -1,0 +1,31 @@
+name: Release
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    container:
+      image: eclipse-temurin:17-jdk
+      options: --user root
+    steps:
+      - name: Install Get Changelog CLI
+        run: npm install -g npm && npm install -g get-changelog-cli
+
+      - name: Get changelog from release
+        uses: rhysd/changelog-from-release/action@v2
+        with:
+          file: CHANGELOG.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to CF and MR
+        uses: gradle/wrapper-validation-action@v1
+        run: ./gradlew checkVersion build publish curseforge modrinth --stacktrace
+        env:
+          CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          FILE_LOCATION: CHANGELOG.md

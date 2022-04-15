@@ -24,6 +24,7 @@ SOFTWARE.
 
 package io.github.merchantpug.dieyourway.condition;
 
+import io.github.apace100.apoli.power.factory.condition.ConditionFactory;
 import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataType;
 import io.github.apace100.calio.data.SerializableDataTypes;
@@ -61,7 +62,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.tag.Tag;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
@@ -148,12 +149,12 @@ public class DYWEntityConditions {
                     return false;
                 }));
         register(new DYWConditionFactory<>(DieYourWay.identifier("submerged_in"), new SerializableData().add("fluid", SerializableDataTypes.FLUID_TAG),
-                (data, entity) -> ((io.github.apace100.apoli.access.SubmergableEntity)entity).isSubmergedInLoosely((Tag<Fluid>)data.get("fluid"))));
+                (data, entity) -> ((SubmergableEntity)entity).dywIsSubmergedInLoosely(data.get("fluid"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("fluid_height"), new SerializableData()
                 .add("fluid", SerializableDataTypes.FLUID_TAG)
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.DOUBLE),
-                (data, entity) -> ((Comparison)data.get("comparison")).compare(((SubmergableEntity)entity).dywGetFluidHeightLoosely((Tag<Fluid>)data.get("fluid")), data.getDouble("compare_to"))));
+                (data, entity) -> ((Comparison)data.get("comparison")).compare(((SubmergableEntity)entity).dywGetFluidHeightLoosely((TagKey<Fluid>)data.get("fluid")), data.getDouble("compare_to"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("food_level"), new SerializableData()
                 .add("comparison", DYWDataTypes.COMPARISON)
                 .add("compare_to", SerializableDataTypes.INT),
@@ -276,7 +277,7 @@ public class DYWEntityConditions {
                 .add("biomes", SerializableDataTypes.IDENTIFIERS, null)
                 .add("condition", DYWDataTypes.BIOME_CONDITION, null),
                 (data, entity) -> {
-                    Biome biome = entity.world.getBiome(entity.getBlockPos());
+                    Biome biome = entity.world.getBiome(entity.getBlockPos()).value();
                     DYWConditionFactory<Biome>.Instance condition = (DYWConditionFactory<Biome>.Instance)data.get("condition");
                     if(data.isPresent("biome") || data.isPresent("biomes")) {
                         Identifier biomeId = entity.world.getRegistryManager().get(Registry.BIOME_KEY).getId(biome);
@@ -394,7 +395,7 @@ public class DYWEntityConditions {
                 (data, entity) -> entity instanceof LivingEntity && ((LivingEntity) entity).getGroup() == data.get("group")));
         register(new DYWConditionFactory<>(DieYourWay.identifier("in_tag"), new SerializableData()
                 .add("tag", SerializableDataTypes.ENTITY_TAG),
-                (data, entity) -> ((Tag<EntityType<?>>)data.get("tag")).contains(entity.getType())));
+                (data, entity) -> entity.getType().getRegistryEntry().isIn(data.get("tag"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("climbing"), new SerializableData(), (data, entity) -> entity instanceof LivingEntity && ((LivingEntity)entity).isClimbing()));
         register(new DYWConditionFactory<>(DieYourWay.identifier("tamed"), new SerializableData(), (data, entity) -> {
             if(entity instanceof TameableEntity) {

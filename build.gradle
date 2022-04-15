@@ -1,6 +1,8 @@
 plugins {
 	id 'fabric-loom' version '0.10-SNAPSHOT'
 	id 'maven-publish'
+	id 'com.matthewprenger.cursegradle' version '1.4.0'
+	id 'com.modrinth.minotaur' version '2.1.1'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
@@ -49,6 +51,153 @@ dependencies {
 	modImplementation "com.github.apace100:calio:${project.calio_version}"
 	include "com.github.apace100:calio:${project.calio_version}"
 	modImplementation "com.github.apace100:apoli:${project.apoli_version}"
+}
+
+String generateHTMLChangelog() {
+	String changelogText = ""
+
+	changelogText += "<h2>DieYourWay v${project.mod_version} - MC ${project.minecraft_versions}</h2>\n"
+
+	File file = file(System.getenv("CHANGELOG_PATH"))
+	if (file.exists()) {
+		file.eachLine { String line ->
+			String text = line;
+			boolean h2 = false
+			boolean h3 = false
+			boolean bolded = false
+			boolean italicised = false
+
+			String newString = text.stripIndent()
+
+			if (!line.isBlank()) {
+				if (text.regionMatches(0, "\\#\\#\\s", 0, 3)) {
+					StringBuilder stringBuilder = new StringBuilder(text);
+					stringBuilder.delete(0, 3);
+					text = stringBuilder.toString()
+					h2 = true
+				}
+				if (text.regionMatches(0, "\\#\\#\\#\\s", 0, 3)) {
+					StringBuilder stringBuilder = new StringBuilder(text);
+					stringBuilder.delete(0, 4);
+					text = stringBuilder.toString()
+					h3 = true
+				}
+				if (text.regionMatches(0, "\\*\\*\\S", 0, 3) && text.regionMatches(text.length() - 3, "\\S\\*\\*", 0, 3)) {
+					StringBuilder stringBuilder = new StringBuilder(text);
+					stringBuilder.delete(0, 2);
+					stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length())
+					text = stringBuilder.toString()
+					bolded = true
+				}
+				if (text.regionMatches(0, "\\*\\S", 0, 2) && text.regionMatches(text.length() - 2, "\\S\\*", 0, 2)) {
+					StringBuilder stringBuilder = new StringBuilder(text);
+					stringBuilder.delete(0, 1);
+					stringBuilder.delete(stringBuilder.length() - 1, stringBuilder.length())
+					text = stringBuilder.toString()
+					italicised = true
+				}
+				if (text.regionMatches(0, "-\\s", 0, 2)) {
+					String removedBulletPointLine = text.stripIndent().replaceAll("-\\s", "")
+					changelogText += "<li>${removedBulletPointLine}</li>\n"
+				}
+				if (h2) {
+					newString = "<h2>" + newString + "</h2>"
+				}
+				if (h3) {
+					newString = "<h3>" + newString + "</h3>"
+				}
+				if (bolded) {
+					newString = "<b>" + newString + "</b>"
+				}
+				if (italicised) {
+					newString = "<i>" + newString + "</i>"
+				}
+			}
+			changelogText += "<p>${newString}</p>\n"
+		}
+	}
+	return changelogText
+}
+
+String generateMarkdownChangelog() {
+	String changelogText = ""
+
+	File file = file(System.getenv("CHANGELOG_PATH"))
+	if(file.exists()) {
+		file.eachLine { String line ->
+			if(!line.isBlank()) {
+				changelog_text += "${line.stripIndent()}\n"
+			}
+			changelog_text += "&nbsp;  \n"
+		}
+	}
+	return changelogText
+}
+
+curseforge {
+	apiKey = System.getenv("CURSEFORGE_API_KEY")
+	if (project.hasProperty("curseforge_project_id")) {
+		project {
+			id = project.cf_project_id
+			releaseType = 'release'
+			if (project.hasProperty("minecraft_versions")) {
+				def gameVersions = project.minecraft_versions.split(", ")
+				gameVersions.each { String gameVersion ->
+					addGameVersion gameVersion
+				}
+			}
+			mainArtifact(remapJar) {
+				displayName = "${project.mod_name} ${project.mod_version} (MC ${project.minecraft_versions})"
+				relations {
+					if(project.hasProperty("cf_required_dependencies")) {
+						project.cf_required_dependencies.split(", ").each { String slug ->
+							requiredDependency slug
+						}
+					}
+				}
+			}
+			changelog = generateHTMLChangelog()
+			changelogType = 'html'
+		}
+		options {
+			forgeGradleIntegration = false
+		}
+	}
+}
+
+import com.modrinth.minotaur.dependencies.ModDependency
+modrinth {
+	token = System.getenv("MODRINTH_TOKEN")
+
+	if(project.hasProperty("modrinth_id")) {
+		projectId = project.modrinth_id
+
+		versionType = project.modrinth_version_type
+
+		loaders = List.of("fabric");
+
+		if(project.hasProperty("mr_release_versions")) {
+			gameVersions = project.modrinth_release_versions.split(", ") as List
+		}
+
+		def deps = []
+
+		if(project.hasProperty("mr_required_dependencies")) {
+			project.modrinth_required_dep_ids.split(", ").each { String slug ->
+				deps << new ModDependency(slug, "required")
+			}
+		}
+
+		dependencies = deps
+
+		versionName = "${project.mod_name} ${project.mod_version} (MC ${project.minecraft_versions})"
+
+		versionNumber = project.mod_version
+
+		changelog = generateMarkdownChangelog()
+
+		uploadFile = remapJar
+	}
 }
 
 processResources {

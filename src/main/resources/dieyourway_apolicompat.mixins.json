@@ -5,6 +5,7 @@
   "plugin": "io.github.merchantpug.dieyourway.mixin.ApoliMixinPlugin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
+    "BiomeAccessor",
     "EntityAccessor",
     "EntityMixin",
     "ServerPlayerInteractionManagerAccessor"

@@ -28,6 +28,7 @@ import io.github.apace100.calio.data.SerializableData;
 import io.github.apace100.calio.data.SerializableDataTypes;
 import io.github.merchantpug.dieyourway.DieYourWay;
 import io.github.merchantpug.dieyourway.data.DYWDataTypes;
+import io.github.merchantpug.dieyourway.mixin.apoli.BiomeAccessor;
 import io.github.merchantpug.dieyourway.registry.DYWRegistries;
 import io.github.merchantpug.dieyourway.util.Comparison;
 import net.minecraft.util.registry.Registry;
@@ -61,7 +62,7 @@ public class DYWBiomeConditions {
             (data, biome) -> ((Comparison)data.get("comparison")).compare(biome.getTemperature(), data.getFloat("compare_to"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("category"), new SerializableData()
             .add("category", SerializableDataTypes.STRING),
-            (data, biome) -> biome.getCategory().getName().equals(data.getString("category"))));
+            (data, biome) -> ((BiomeAccessor)(Object)biome).getCategory().getName().equals(data.getString("category"))));
         register(new DYWConditionFactory<>(DieYourWay.identifier("precipitation"), new SerializableData()
             .add("precipitation", SerializableDataTypes.STRING),
             (data, biome) -> biome.getPrecipitation().getName().equals(data.getString("precipitation"))));

@@ -57,7 +57,7 @@ dependencies {
 String generateHTMLChangelog() {
 	String changelogText = ""
 
-	File file = file("${projectDir.toString()}/latest_changes.md")
+	File file = file("${projectDir}/latest_changes.txt")
 	if (file.exists()) {
 		file.eachLine { String line ->
 			String text = line;
@@ -121,7 +121,7 @@ String generateHTMLChangelog() {
 String generateMarkdownChangelog() {
 	String changelogText = ""
 
-	File file = file("${projectDir.toString()}/latest_changes.md")
+	File file = file("${projectDir}/latest_changes.txt")
 	if(file.exists()) {
 		file.eachLine { String line ->
 			if(!line.isBlank()) {
@@ -147,7 +147,7 @@ githubRelease {
 
 	releaseName = "${project.mod_name} v${project.mod_version} (MC ${project.gh_minecraft_versions})"
 
-	releaseAssets = files("${project.buildDir}/libs/${archivesBaseName}-${version}.jar", "${project.buildDir}/devlibs/${archivesBaseName}-${version}-dev.jar", "${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar", "${project.buildDir}/devlibs/${archivesBaseName}-${version}-sources-dev.jar").files
+	releaseAssets = files("${project.buildDir}/libs/${archivesBaseName}-${version}.jar", "${project.buildDir}/libs/${archivesBaseName}-${version}-sources.jar").files
 }
 
 curseforge {

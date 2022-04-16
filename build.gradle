@@ -105,7 +105,7 @@ String generateHTMLChangelog() {
 					newString = "<li>" + newString + "</li>"
 				}
 				if (bolded) {
-					newString = "<b>" + newString + "</b>"
+					newString = "<b><strong>" + newString + "</strong></b>"
 				}
 				if (italicised) {
 					newString = "<i>" + newString + "</i>"
@@ -162,12 +162,19 @@ curseforge {
 		project {
 			id = project.cf_project_id
 			releaseType = project.cf_release_type
-			if (project.hasProperty("cf_minecraft_versions")) {
-				def gameVersions = project.cf_minecraft_versions.split(", ")
+			if (project.hasProperty("cf_game_versions")) {
+				def gameVersions = project.cf_game_versions.split(", ")
 				gameVersions.each { String gameVersion ->
 					addGameVersion gameVersion
 				}
 			}
+			if (project.hasProperty("cf_java_versions")) {
+				def gameVersions = project.cf_java_versions.split(", ")
+				gameVersions.each { String gameVersion ->
+					addGameVersion gameVersion
+				}
+			}
+			addGameVersion project.cf_modloader
 			mainArtifact(remapJar) {
 				displayName = "${project.mod_name} v${project.mod_version} (MC ${project.cf_minecraft_versions})"
 				relations {

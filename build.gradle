@@ -57,47 +57,43 @@ dependencies {
 String generateHTMLChangelog() {
 	String changelogText = ""
 
-	File file = file("${projectDir}/latest_changes.txt")
-	if (file.exists()) {
+	File file = file("${projectDir}/latest_changelog.txt")
+	if(file.exists()) {
 		file.eachLine { String line ->
-			String text = line;
-			boolean h2 = false
-			boolean h3 = false
-			boolean bolded = false
-			boolean italicised = false
-
-			String newString = text.stripIndent()
-
 			if (!line.isBlank()) {
-				if (text.regionMatches(0, "\\#\\#\\s", 0, 3)) {
-					StringBuilder stringBuilder = new StringBuilder(text);
-					stringBuilder.delete(0, 3);
-					text = stringBuilder.toString()
+				boolean h2 = false
+				boolean h3 = false
+				boolean bolded = false
+				boolean italicised = false
+				boolean bulletPointed = false
+
+				String newString = ""
+
+				if (line.startsWith("## ")) {
+					newString = line.replaceFirst("## ", "")
 					h2 = true
 				}
-				if (text.regionMatches(0, "\\#\\#\\#\\s", 0, 3)) {
-					StringBuilder stringBuilder = new StringBuilder(text);
-					stringBuilder.delete(0, 4);
-					text = stringBuilder.toString()
+				if (line.startsWith("### ")) {
+					newString = line.replaceFirst("### ", "")
 					h3 = true
 				}
-				if (text.regionMatches(0, "\\*\\*\\S", 0, 3) && text.regionMatches(text.length() - 3, "\\S\\*\\*", 0, 3)) {
-					StringBuilder stringBuilder = new StringBuilder(text);
-					stringBuilder.delete(0, 2);
+				if (line.startsWith("- ")) {
+					newString = line.replaceFirst("- ", "")
+					bulletPointed = true
+				}
+				if (line.startsWith("**") && line.endsWith("**")) {
+					StringBuilder stringBuilder = new StringBuilder(line)
+					stringBuilder.delete(0, 2)
 					stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length())
-					text = stringBuilder.toString()
+					newString = stringBuilder.toString()
 					bolded = true
 				}
-				if (text.regionMatches(0, "\\*\\S", 0, 2) && text.regionMatches(text.length() - 2, "\\S\\*", 0, 2)) {
-					StringBuilder stringBuilder = new StringBuilder(text);
-					stringBuilder.delete(0, 1);
+				if (line.startsWith("*") && line.endsWith("*")) {
+					StringBuilder stringBuilder = new StringBuilder(line)
+					stringBuilder.delete(0, 1)
 					stringBuilder.delete(stringBuilder.length() - 1, stringBuilder.length())
-					text = stringBuilder.toString()
+					newString = stringBuilder.toString()
 					italicised = true
-				}
-				if (text.regionMatches(0, "-\\s", 0, 2)) {
-					String removedBulletPointLine = text.stripIndent().replaceAll("-\\s", "")
-					changelogText += "<li>${removedBulletPointLine}</li>\n"
 				}
 				if (h2) {
 					newString = "<h2>" + newString + "</h2>"
@@ -105,14 +101,23 @@ String generateHTMLChangelog() {
 				if (h3) {
 					newString = "<h3>" + newString + "</h3>"
 				}
+				if (bulletPointed) {
+					newString = "<li>" + newString + "</li>"
+				}
 				if (bolded) {
 					newString = "<b>" + newString + "</b>"
 				}
 				if (italicised) {
 					newString = "<i>" + newString + "</i>"
 				}
+				if (!(h2 || h3 || bulletPointed || bolded || italicised)) {
+					changelogText += "<p>${newString}</p>\n"
+				} else {
+					changelogText += "${newString}\n"
+				}
+			} else {
+				changelogText += "\n"
 			}
-			changelogText += "<p>${newString}</p>\n"
 		}
 	}
 	return changelogText
@@ -121,13 +126,14 @@ String generateHTMLChangelog() {
 String generateMarkdownChangelog() {
 	String changelogText = ""
 
-	File file = file("${projectDir}/latest_changes.txt")
+	File file = file("${projectDir}/latest_changelog.txt")
 	if(file.exists()) {
 		file.eachLine { String line ->
 			if(!line.isBlank()) {
 				changelogText += "${line.stripIndent()}\n"
+			} else {
+				changelogText += "\n"
 			}
-			changelogText += "&nbsp;  \n"
 		}
 	}
 	return changelogText
@@ -152,18 +158,18 @@ githubRelease {
 
 curseforge {
 	apiKey = System.getenv("CURSEFORGE_API_KEY")
-	if (project.hasProperty("curseforge_project_id")) {
+	if (project.hasProperty("cf_project_id")) {
 		project {
 			id = project.cf_project_id
 			releaseType = project.cf_release_type
-			if (project.hasProperty("minecraft_versions")) {
-				def gameVersions = project.minecraft_versions.split(", ")
+			if (project.hasProperty("cf_minecraft_versions")) {
+				def gameVersions = project.cf_minecraft_versions.split(", ")
 				gameVersions.each { String gameVersion ->
 					addGameVersion gameVersion
 				}
 			}
 			mainArtifact(remapJar) {
-				displayName = "${project.mod_name} v${project.mod_version} (MC ${project.minecraft_versions})"
+				displayName = "${project.mod_name} v${project.mod_version} (MC ${project.cf_minecraft_versions})"
 				relations {
 					if(project.hasProperty("cf_required_dependencies")) {
 						project.cf_required_dependencies.split(", ").each { String slug ->
@@ -214,8 +220,6 @@ modrinth {
 
 		uploadFile = remapJar
 	}
-
-	debugMode = true
 }
 
 processResources {
